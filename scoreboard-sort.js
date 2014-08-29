@@ -8,6 +8,7 @@ $(function() {
   });
 
   var paths = {};
+
   data.forEach(function(scoreboard, tick) {
     var order = scoreboard.order;
     order.forEach(function(contestantID, index) {
