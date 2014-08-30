@@ -14,6 +14,8 @@ var contestTrack = function() {
     'tip-width': 100,
     'tip-height': 30,
     'tip-offsetY': 15,
+    'last-tip-width': 150,
+    'last-tip-height': 20,
   };
   var handles = {};
   var tooltips = {};
@@ -46,6 +48,7 @@ var contestTrack = function() {
           pushPoint(contestant.handle, indexC, indexS, {
             tooltip: (indexC+1) + '° - ' + contestant.points, 
             handle: contestant.handle,
+            place: indexC + 1,
           });
         });
       });
@@ -58,6 +61,28 @@ var contestTrack = function() {
     getAttr: function(propName) {
       return properties[propName]; 
     },
+    displayLastContest: function (index, transform) {
+      handleOrder.forEach(function(handle) {
+        var point = transform(paths[handle][index]);
+        var place = pathData[handle][index].place + '° ' + handle;
+        var tooltip = D3tooltips.append('g')
+          .attr('transform', 'translate(' + 
+              (point.x + 10) + ', ' + 
+              (point.y - track.getAttr('last-tip-height')/2) + ')');
+        var rect = tooltip.append('rect');
+        var text = tooltip.append('text')
+          .attr('x', 5)
+          .attr('y', track.getAttr('last-tip-height')/2 + 5)
+          .attr('fill', 'white')
+          .text(place);
+
+        rect
+          .attr('rx', 5)
+          .attr('ry', 5)
+          .attr('width', text.node().getBBox().width + 10)
+          .attr('height', track.getAttr('last-tip-height'));
+      });
+    },
     displayRange: function(begin, end) {
       D3view.selectAll('*').remove();
       D3tooltips.selectAll('*').remove();
@@ -65,7 +90,7 @@ var contestTrack = function() {
         var points = end - begin;
         var width = (points - 1) * track.getAttr('offsetX');
         var height = (handleSize - 1) * track.getAttr('offsetY');
-        var scaleX = (track.getAttr('width') - 20) / width;
+        var scaleX = (track.getAttr('width') - 120) / width;
         var scaleY = (track.getAttr('height') - 20) / height;
         return {
           x: point.x * scaleX, 
@@ -89,6 +114,7 @@ var contestTrack = function() {
           y: +10
         });
       };
+      track.displayLastContest(end - 1, transform);
       handleOrder.forEach(function(handle, contestantIndex) {
         var path = paths[handle].slice(begin, end).map(transform);
         var D3path = D3view
