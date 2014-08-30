@@ -46,7 +46,7 @@ var contestTrack = function() {
             handleSize++;
           }
           pushPoint(contestant.handle, indexC, indexS, {
-            tooltip: (indexC+1) + '° - ' + contestant.points, 
+            tooltip: (indexC+1) + '° ' + contestant.points, 
             handle: contestant.handle,
             place: indexC + 1,
           });
@@ -150,7 +150,6 @@ var contestTrack = function() {
             .attr('cx', point.x)
             .attr('cy', point.y)
             .attr('r', 4)
-            .attr('fill', 'red') 
             .on('mouseover', function() { 
               showPath(path, pathData[handle], contestantIndex);
               /*showTooltip(contestantIndex, contestIndex, {
@@ -178,8 +177,8 @@ var contestTrack = function() {
   function showPath(path, pData, contestantIndex) {
     path.forEach(function(point, index) {
       showTooltip(contestantIndex, index, {
-        x: point.x - track.getAttr('tip-width')/2, 
-        y: point.y - track.getAttr('tip-height') 
+        x: point.x, 
+        y: point.y - track.getAttr('tip-height')/1.5 
                    - track.getAttr('tip-offsetY'),
       }, pData[index]); 
     });
@@ -215,28 +214,27 @@ var contestTrack = function() {
         .attr('rx', 5)
         .attr('ry', 5)
         .classed('point-tip', true)
-        .attr('height', track.getAttr('tip-height'))
-        .attr('width', track.getAttr('tip-width'));
 
     var offset = track.getAttr('tip-offsetY')*.5;
 
-    tooltip.append('text')
+    var text = tooltip.append('text')
       .attr('text-anchor', 'middle')
-      .attr('x', track.getAttr('tip-width')/2) 
-      .attr('y', -offset) 
-      .attr('fill', 'red')
-      .text(data.handle);
-
-    tooltip.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('x', track.getAttr('tip-width')/2) 
+      .attr('x', 0) 
       .attr('y', track.getAttr('tip-height')/2 + 5) 
-      .attr('fill', 'red')
+      .attr('fill', 'white')
       .text(data.tooltip);
 
+    var box = text.node().getBBox();
+    var width = box.width + 10, height = box.height + 5;
+    
+    rect.attr('width', width)
+        .attr('height', height) 
+        .attr('x', -width/2)
+        .attr('y', height/2 - offset);
+  
     var vertex = {
-      x: track.getAttr('tip-width')/2,
-      y: track.getAttr('tip-height') + offset,
+      x: 0,
+      y: height + offset,
     };
 
     var triangle = 

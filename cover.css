@@ -3,15 +3,15 @@
  */
 
 .gold {
-  fill: gold;
-}
-
-.bronze {
   fill: red;
 }
 
-.silver {
+.bronze {
   fill: steelblue;
+}
+
+.silver {
+  fill: gold;
 }
 
 /* Links */
