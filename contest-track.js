@@ -64,7 +64,17 @@ var contestTrack = function() {
     displayLastContest: function (index, transform) {
       handleOrder.forEach(function(handle) {
         var point = transform(paths[handle][index]);
-        var place = pathData[handle][index].place + '° ' + handle;
+        var place = pathData[handle][index].place;
+        var team="";
+        if (place <= 3) {
+          team = "gold"; 
+        } else if (place <= 6) {
+          team = "silver";
+        } else if (place <= 9) {
+          team = "bronze"; 
+        }
+
+        var label = place + '° ' + handle;
         var tooltip = D3tooltips.append('g')
           .attr('transform', 'translate(' + 
               (point.x + 10) + ', ' + 
@@ -74,13 +84,16 @@ var contestTrack = function() {
           .attr('x', 5)
           .attr('y', track.getAttr('last-tip-height')/2 + 5)
           .attr('fill', 'white')
-          .text(place);
+          .text(label);
 
         rect
           .attr('rx', 5)
           .attr('ry', 5)
           .attr('width', text.node().getBBox().width + 10)
           .attr('height', track.getAttr('last-tip-height'));
+         if (team) {
+           rect.classed(team, true); 
+         }
       });
     },
     displayRange: function(begin, end) {

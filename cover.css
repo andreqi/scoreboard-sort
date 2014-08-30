@@ -2,6 +2,18 @@
  * Globals
  */
 
+.gold {
+  fill: gold;
+}
+
+.bronze {
+  fill: red;
+}
+
+.silver {
+  fill: steelblue;
+}
+
 /* Links */
 path {
   stroke: steelblue;
