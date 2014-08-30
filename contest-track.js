@@ -17,12 +17,6 @@ var contestTrack = function() {
   };
   var handles = {};
   var tooltips = {};
-  var contests = 0;
-  var properties = {
-    'offsetX': 200, 
-    'offsetY': 40
-  };
-  var handles = {};
   var handleOrder = [];
   var handleSize = 0;
 
@@ -37,9 +31,6 @@ var contestTrack = function() {
     },
     setData: function(d) {
       data = d;
-      return track;
-    },
-    setData: function(d) {
       contests = data.length;
       handles = {};
       data.forEach(function(scoreboard, indexS) {
@@ -56,7 +47,6 @@ var contestTrack = function() {
             tooltip: (indexC+1) + '° - ' + contestant.points, 
             handle: contestant.handle,
           });
-          pushPoint(contestant.handle, indexC, indexS);
         });
       });
       return track;
@@ -101,16 +91,6 @@ var contestTrack = function() {
       };
       handleOrder.forEach(function(handle, contestantIndex) {
         var path = paths[handle].slice(begin, end).map(transform);
-    displayRange: function(begin, end) {
-      D3view.selectAll('*').remove();
-      translate = function(point) {
-        return {
-          x: point.x - begin * properties['offsetX'],
-          y: point.y
-        }  
-      };
-      handleOrder.forEach(function(handle) {
-        var path = paths[handle].slice(begin, end).map(translate);
         var D3path = D3view
                   .append('path')
                     .attr('d', formatPath(path))
