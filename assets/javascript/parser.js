@@ -10,7 +10,7 @@ var parse = function(file) {
       }
       contest[index].push({
         handle: name, 
-        points: acum,
+        points: parseFloat(acum),
       });
     });  
   });
