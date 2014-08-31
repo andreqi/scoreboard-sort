@@ -1,4 +1,8 @@
 $(function(){
+  $.ajax({
+    type: 'get',
+    url: 'assets/data/data.in',
+  }).done(function(str) { console.log(str); });
   var data = d3.range(4).map(function(id) { 
     var order = d3.shuffle(d3.range(20));
     return order.map(function(cid, pos){ 
