@@ -113,11 +113,13 @@ var contestTrack = function() {
     displayContestLabels: function (begin, end, transform) {
       D3contestLabels.selectAll('*').remove();
       var points = contestLabel.slice(begin, end).map(transform);
+      var last = end - begin - 1;
       points.forEach(function(point, index) {
         var container = D3contestLabels.append('g');
         var tooltip = D3tooltip(container)
           .attr('h-padding', 10)
-          .attr('text-content', 'Contest ' + (index+1))
+          .attr('text-content', (index != last) ? 'Contest ' + (index+1)
+                                                : 'Wiki')
           .attr('display-triangle', false)
           .display();
 
