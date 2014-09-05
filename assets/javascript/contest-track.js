@@ -5,6 +5,7 @@
 var contestTrack = function() {
   var paths = {};
   var pathData = {};
+  var contestLabel = [];
   var contests = 0;
   var properties = {
     'offsetX': 200, 
@@ -13,7 +14,7 @@ var contestTrack = function() {
     'width': 500,
     'tip-width': 100,
     'tip-height': 30,
-    'tip-offsetY': 15,
+    'tip-offsetY': 20,
     'last-tip-width': 150,
     'last-tip-height': 20,
   };
@@ -22,12 +23,17 @@ var contestTrack = function() {
   var handleOrder = [];
   var handleSize = 0;
 
+  // D3 containers
   var D3view = null;
   var D3tooltips = null;
+  var D3lasttips = null;
+  var D3contestLabels = null;
   
   var track = {
     setParent: function (D3parent) {
       D3view = D3parent.append('g'); 
+      D3contestLabels = D3parent.append('g'); 
+      D3lasttips = D3parent.append('g'); 
       D3tooltips = D3parent.append('g'); 
       return track;
     },
@@ -39,13 +45,17 @@ var contestTrack = function() {
         scoreboard.sort(function(a, b) {
           return -a.points + b.points; 
         });
+        // first line to labels
+        contestLabel.push(getPoint(0, indexS));
+
         scoreboard.forEach(function(contestant, indexC) {
           if (!handles[contestant.handle]) {
             handles[contestant.handle] = 1; 
             handleOrder.push(contestant.handle);
             handleSize++;
           }
-          pushPoint(contestant.handle, indexC, indexS, {
+          // first line reserved to contest labels
+          pushPoint(contestant.handle, indexC + 1, indexS, {
             tooltip: (indexC+1) + '° ' + contestant.points, 
             handle: contestant.handle,
             place: indexC + 1,
@@ -62,9 +72,11 @@ var contestTrack = function() {
       return properties[propName]; 
     },
     displayLastContest: function (index, transform) {
+      D3lasttips.selectAll('*').remove();
       handleOrder.forEach(function(handle) {
         var point = transform(paths[handle][index]);
         var place = pathData[handle][index].place;
+
         var team="";
         if (place <= 3) {
           team = "gold"; 
@@ -72,10 +84,12 @@ var contestTrack = function() {
           team = "silver";
         } else if (place <= 9) {
           team = "bronze"; 
+        } else if (place <= 12) {
+          team = "runner-up"; 
         }
 
         var label = place + '° ' + handle;
-        var tooltip = D3tooltips.append('g')
+        var tooltip = D3lasttips.append('g')
           .attr('transform', 'translate(' + 
               (point.x + 10) + ', ' + 
               (point.y - track.getAttr('last-tip-height')/2) + ')');
@@ -96,13 +110,30 @@ var contestTrack = function() {
          }
       });
     },
+    displayContestLabels: function (begin, end, transform) {
+      D3contestLabels.selectAll('*').remove();
+      var points = contestLabel.slice(begin, end).map(transform);
+      points.forEach(function(point, index) {
+        var container = D3contestLabels.append('g');
+        var tooltip = D3tooltip(container)
+          .attr('h-padding', 10)
+          .attr('text-content', 'Contest ' + (index+1))
+          .attr('display-triangle', false)
+          .display();
+
+        container
+          .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
+          .classed('contest-label-container');
+
+      });
+    },
     displayRange: function(begin, end) {
       D3view.selectAll('*').remove();
       D3tooltips.selectAll('*').remove();
       var scale = function(point) {
         var points = end - begin;
         var width = (points - 1) * track.getAttr('offsetX');
-        var height = (handleSize - 1) * track.getAttr('offsetY');
+        var height = (handleSize) * track.getAttr('offsetY');
         var scaleX = (track.getAttr('width') - 120) / width;
         var scaleY = (track.getAttr('height') - 20) / height;
         return {
@@ -124,10 +155,13 @@ var contestTrack = function() {
         var p2 = scale(p1);
         return translate(p2, {
           x: +10, 
-          y: +10
+          y: +10,
         });
       };
+
       track.displayLastContest(end - 1, transform);
+      track.displayContestLabels(begin, end, transform);
+
       handleOrder.forEach(function(handle, contestantIndex) {
         var path = paths[handle].slice(begin, end).map(transform);
         var D3path = D3view
@@ -135,7 +169,9 @@ var contestTrack = function() {
                     .attr('d', formatPath(path))
                     .attr('fill', 'transparent')
                     .style('pointer-events', 'stroke');
+
         applyIdleStyle(D3path);
+
         D3path.on('mouseover', function() {
           showPath(path, pathData[handle], contestantIndex);
           applySelectedStyle(D3path); 
@@ -152,18 +188,12 @@ var contestTrack = function() {
             .attr('r', 4)
             .on('mouseover', function() { 
               showPath(path, pathData[handle], contestantIndex);
-              /*showTooltip(contestantIndex, contestIndex, {
-                x: point.x - track.getAttr('tip-width')/2, 
-                y: point.y - track.getAttr('tip-height') 
-                           - track.getAttr('tip-offsetY'),
-              }, pathData[handle][contestIndex]);*/
               applySelectedStyle(D3path); 
             })
             .on('mouseout', function() { 
               hidePath(contestantIndex, path.length);
-              //hideTooltip(contestantIndex, contestIndex);
               applyIdleStyle(D3path); 
-            })
+            });
           // TODO: add applyCircleStyle
         });
       });
@@ -178,8 +208,7 @@ var contestTrack = function() {
     path.forEach(function(point, index) {
       showTooltip(contestantIndex, index, {
         x: point.x, 
-        y: point.y - track.getAttr('tip-height')/1.5 
-                   - track.getAttr('tip-offsetY'),
+        y: point.y - track.getAttr('tip-offsetY'),
       }, pData[index]); 
     });
   }
@@ -204,47 +233,15 @@ var contestTrack = function() {
 
   function showTooltip(contestantIndex, contestIndex, point, data) {
     var key = genKey(contestantIndex, contestIndex); 
-    var tooltip = 
-      D3tooltips.append('g')
+    var container = D3tooltips.append('g');
+    var tooltip = D3tooltip(container); 
+    tooltip
+      .attr('h-padding', 5)
+      .attr('text-content', data.tooltip)
+      .display();
+
+    container
       .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
-      .attr('id', key);  
-
-    var rect = 
-      tooltip.append('rect')
-        .attr('rx', 5)
-        .attr('ry', 5)
-        .classed('point-tip', true)
-
-    var offset = track.getAttr('tip-offsetY')*.5;
-
-    var text = tooltip.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('x', 0) 
-      .attr('y', track.getAttr('tip-height')/2 + 5) 
-      .attr('fill', 'white')
-      .text(data.tooltip);
-
-    var box = text.node().getBBox();
-    var width = box.width + 10, height = box.height + 5;
-    
-    rect.attr('width', width)
-        .attr('height', height) 
-        .attr('x', -width/2)
-        .attr('y', height/2 - offset);
-  
-    var vertex = {
-      x: 0,
-      y: height + offset,
-    };
-
-    var triangle = 
-      tooltip.append('polygon')
-      .classed('point-tip', true)
-      .attr('points', [
-          add(vertex, {x:-offset, y: -offset}),
-          vertex,
-          add(vertex, {x: offset, y: -offset}),
-      ].map(formatPoint).join(' '));
 
     tooltips[key] = tooltip;
   }
@@ -273,10 +270,6 @@ var contestTrack = function() {
     }; 
   }
 
-  function formatPoint(point) {
-    return point.x + " " + point.y; 
-  }
-
   function add(a, b) {
     return {x: a.x + b.x, y: a.y + b.y}; 
   }
@@ -286,10 +279,10 @@ var contestTrack = function() {
   }
 
   function formatPath(path) {
-    var stringPath = 'M ' + formatPoint(path[0]);
+    var stringPath = 'M ' + UTILS.formatPoint(path[0]);
     for (var index = 1; index < path.length; index++) {
       var bezier = getCubicPoints(path[index-1], path[index]);
-      stringPath += ' C ' + bezier.map(formatPoint).join(' ') 
+      stringPath += ' C ' + bezier.map(UTILS.formatPoint).join(' ') 
     }
     return stringPath;
   }
