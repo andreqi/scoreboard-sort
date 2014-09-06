@@ -5,6 +5,8 @@
 var contestTrack = function() {
   var paths = {};
   var pathData = {};
+  var showDispatcher = STL.dispatcher();
+  var hideDispatcher = STL.dispatcher();
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -100,18 +102,35 @@ var contestTrack = function() {
           .attr('fill', 'white')
           .text(label);
 
-        rect
-          .attr('rx', 5)
-          .attr('ry', 5)
-          .attr('width', text.node().getBBox().width + 10)
-          .attr('height', track.getAttr('last-tip-height'));
-         if (team) {
-           rect.classed(team, true); 
-         }
+        tooltip
+          .attr('text-content', label)
+          .attr('display-triangle', false)
+          .attr('h-padding', 5)
+          .display();
+
+        D3tooltipContainer
+          .on('mouseover', function() { 
+            showDispatcher.dispatch(handle); 
+          })
+          .on('mouseout', function() { 
+            hideDispatcher.dispatch(handle); 
+          });
+
+        var width = D3tooltipContainer.node().getBBox().width;
+        tooltip.translate({ 
+          x: point.x + width/2 + 10,
+          y: point.y,
+        });
+        if (team) {
+          tooltip.getAttr('rect').classed(team, true); 
+        }
       });
     },
     displayContestLabels: function (begin, end, transform) {
       D3contestLabels.selectAll('*').remove();
+      showDispatcher.clear();
+      hideDispatcher.clear();
+
       var points = contestLabel.slice(begin, end).map(transform);
       var last = end - begin - 1;
       points.forEach(function(point, index) {
@@ -172,15 +191,20 @@ var contestTrack = function() {
                     .attr('fill', 'transparent')
                     .style('pointer-events', 'stroke');
 
-        applyIdleStyle(D3path);
+        showDispatcher.register(handle, function() {
+          showPath(path, pathData[handle], contestantIndex);
+          D3path.classed('selected', true); 
+        });
+        hideDispatcher.register(handle, function() {
+          hidePath(contestantIndex, path.length);
+          D3path.classed('selected', false); 
+        });
 
         D3path.on('mouseover', function() {
-          showPath(path, pathData[handle], contestantIndex);
-          applySelectedStyle(D3path); 
+          showDispatcher.dispatch(handle);
         });
         D3path.on('mouseout', function() {
-          hidePath(contestantIndex, path.length);
-          applyIdleStyle(D3path);
+          hideDispatcher.dispatch(handle);
         });
 
         path.forEach(function(point, contestIndex) {
@@ -189,14 +213,11 @@ var contestTrack = function() {
             .attr('cy', point.y)
             .attr('r', 4)
             .on('mouseover', function() { 
-              showPath(path, pathData[handle], contestantIndex);
-              applySelectedStyle(D3path); 
+              showDispatcher.dispatch(handle); 
             })
             .on('mouseout', function() { 
-              hidePath(contestantIndex, path.length);
-              applyIdleStyle(D3path); 
+              hideDispatcher.dispatch(handle); 
             });
-          // TODO: add applyCircleStyle
         });
       });
       return track;
@@ -219,14 +240,6 @@ var contestTrack = function() {
     for (var idx = 0; idx < times; idx++) {
       hideTooltip(contestantIndex, idx); 
     }
-  }
-
-  function applyIdleStyle(D3path) {
-    D3path.classed('selected', false);
-  }
-
-  function applySelectedStyle(D3path) {
-    D3path.classed('selected', true);
   }
 
   function genKey(contestant, contest) {
