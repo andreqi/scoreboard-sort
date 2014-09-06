@@ -5,8 +5,8 @@
 var contestTrack = function() {
   var paths = {};
   var pathData = {};
-  var show = {};
-  var hide = {};
+  var showDispatcher = STL.dispatcher();
+  var hideDispatcher = STL.dispatcher();
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -101,8 +101,12 @@ var contestTrack = function() {
           .display();
 
         D3tooltipContainer
-          .on('mouseover', function() { showPathTest(handle); })
-          .on('mouseout', function() { hidePathTest(handle); });
+          .on('mouseover', function() { 
+            showDispatcher.dispatch(handle); 
+          })
+          .on('mouseout', function() { 
+            hideDispatcher.dispatch(handle); 
+          });
 
         var width = D3tooltipContainer.node().getBBox().width;
         tooltip.translate({ 
@@ -116,6 +120,9 @@ var contestTrack = function() {
     },
     displayContestLabels: function (begin, end, transform) {
       D3contestLabels.selectAll('*').remove();
+      showDispatcher.clear();
+      hideDispatcher.clear();
+
       var points = contestLabel.slice(begin, end).map(transform);
       var last = end - begin - 1;
       points.forEach(function(point, index) {
@@ -175,21 +182,20 @@ var contestTrack = function() {
                     .attr('fill', 'transparent')
                     .style('pointer-events', 'stroke');
 
-        applyIdleStyle(D3path);
-
-        pushEvent(handle, function() {
+        showDispatcher.register(handle, function() {
           showPath(path, pathData[handle], contestantIndex);
-          applySelectedStyle(D3path); 
-        }, function() {
+          D3path.classed('selected', true); 
+        });
+        hideDispatcher.register(handle, function() {
           hidePath(contestantIndex, path.length);
-          applyIdleStyle(D3path);
+          D3path.classed('selected', false); 
         });
 
         D3path.on('mouseover', function() {
-          showPathTest(handle);
+          showDispatcher.dispatch(handle);
         });
         D3path.on('mouseout', function() {
-          hidePathTest(handle);
+          hideDispatcher.dispatch(handle);
         });
 
         path.forEach(function(point, contestIndex) {
@@ -197,8 +203,12 @@ var contestTrack = function() {
             .attr('cx', point.x)
             .attr('cy', point.y)
             .attr('r', 4)
-            .on('mouseover', function() { showPathTest(handle); })
-            .on('mouseout', function() { hidePathTest(handle); });
+            .on('mouseover', function() { 
+              showDispatcher.dispatch(handle); 
+            })
+            .on('mouseout', function() { 
+              hideDispatcher.dispatch(handle); 
+            });
         });
       });
       return track;
@@ -207,29 +217,6 @@ var contestTrack = function() {
       return track.displayRange(0, data.length);
     }
   };
-
-  function pushEvent(handle, showEvent, hideEvent) {
-    if (show[handle]) {
-      show[handle].push(showEvent); 
-      hide[handle].push(hideEvent); 
-    } else {
-      show[handle] = [showEvent]; 
-      hide[handle] = [hideEvent];
-    }
-  }
-
-  function clearEvents(handle) {
-    show[handle] = []; 
-    hide[handle] = [];
-  }
-
-  function showPathTest(handle) {
-    show[handle].forEach(function(d){ d(); });
-  }
-
-  function hidePathTest(handle) {
-    hide[handle].forEach(function(d){ d(); });
-  }
 
   function showPath(path, pData, contestantIndex) {
     path.forEach(function(point, index) {
@@ -244,14 +231,6 @@ var contestTrack = function() {
     for (var idx = 0; idx < times; idx++) {
       hideTooltip(contestantIndex, idx); 
     }
-  }
-
-  function applyIdleStyle(D3path) {
-    D3path.classed('selected', false);
-  }
-
-  function applySelectedStyle(D3path) {
-    D3path.classed('selected', true);
   }
 
   function genKey(contestant, contest) {
