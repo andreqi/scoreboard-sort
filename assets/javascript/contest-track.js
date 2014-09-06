@@ -91,16 +91,8 @@ var contestTrack = function() {
         }
 
         var label = place + '° ' + handle;
-        var tooltip = D3lasttips.append('g')
-          .attr('transform', 'translate(' + 
-              (point.x + 10) + ', ' + 
-              (point.y - track.getAttr('last-tip-height')/2) + ')');
-        var rect = tooltip.append('rect');
-        var text = tooltip.append('text')
-          .attr('x', 5)
-          .attr('y', track.getAttr('last-tip-height')/2 + 5)
-          .attr('fill', 'white')
-          .text(label);
+        var D3tooltipContainer = D3lasttips.append('g');
+        var tooltip = D3tooltip(D3tooltipContainer);
 
         tooltip
           .attr('text-content', label)
@@ -140,12 +132,11 @@ var contestTrack = function() {
           .attr('text-content', (index != last) ? 'Contest ' + (index+1)
                                                 : 'Wiki')
           .attr('display-triangle', false)
+          .translate(point)
           .display();
 
         container
-          .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
           .classed('contest-label-container');
-
       });
     },
     displayRange: function(begin, end) {
@@ -253,11 +244,8 @@ var contestTrack = function() {
     tooltip
       .attr('h-padding', 5)
       .attr('text-content', data.tooltip)
+      .translate(point)
       .display();
-
-    container
-      .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
-
     tooltips[key] = tooltip;
   }
 
@@ -281,7 +269,7 @@ var contestTrack = function() {
     var offsetY = track.getAttr('offsetY');
     return {
       x: offsetX * (col),
-      y: offsetY * (row) 
+      y: offsetY * (row), 
     }; 
   }
 
@@ -290,7 +278,11 @@ var contestTrack = function() {
   }
 
   function getCubicPoints(a, b) {
-    return [{x: (b.x+a.x)/2, y: a.y}, {x: (a.x + b.x)/2, y: b.y}, b];
+    return [
+      {x: (b.x + a.x)/2, y: a.y}, 
+      {x: (a.x + b.x)/2, y: b.y}, 
+      b,
+    ];
   }
 
   function formatPath(path) {
