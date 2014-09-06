@@ -5,6 +5,8 @@
 var contestTrack = function() {
   var paths = {};
   var pathData = {};
+  var show = {};
+  var hide = {};
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -89,25 +91,27 @@ var contestTrack = function() {
         }
 
         var label = place + '° ' + handle;
-        var tooltip = D3lasttips.append('g')
-          .attr('transform', 'translate(' + 
-              (point.x + 10) + ', ' + 
-              (point.y - track.getAttr('last-tip-height')/2) + ')');
-        var rect = tooltip.append('rect');
-        var text = tooltip.append('text')
-          .attr('x', 5)
-          .attr('y', track.getAttr('last-tip-height')/2 + 5)
-          .attr('fill', 'white')
-          .text(label);
+        var D3tooltipContainer = D3lasttips.append('g');
+        var tooltip = D3tooltip(D3tooltipContainer);
 
-        rect
-          .attr('rx', 5)
-          .attr('ry', 5)
-          .attr('width', text.node().getBBox().width + 10)
-          .attr('height', track.getAttr('last-tip-height'));
-         if (team) {
-           rect.classed(team, true); 
-         }
+        tooltip
+          .attr('text-content', label)
+          .attr('display-triangle', false)
+          .attr('h-padding', 5)
+          .display();
+
+        D3tooltipContainer
+          .on('mouseover', function() { showPathTest(handle); })
+          .on('mouseout', function() { hidePathTest(handle); });
+
+        var width = D3tooltipContainer.node().getBBox().width;
+        tooltip.translate({ 
+          x: point.x + width/2 + 10,
+          y: point.y,
+        });
+        if (team) {
+          tooltip.getAttr('rect').classed(team, true); 
+        }
       });
     },
     displayContestLabels: function (begin, end, transform) {
@@ -121,12 +125,11 @@ var contestTrack = function() {
           .attr('text-content', (index != last) ? 'Contest ' + (index+1)
                                                 : 'Wiki')
           .attr('display-triangle', false)
+          .translate(point)
           .display();
 
         container
-          .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
           .classed('contest-label-container');
-
       });
     },
     displayRange: function(begin, end) {
@@ -174,13 +177,19 @@ var contestTrack = function() {
 
         applyIdleStyle(D3path);
 
-        D3path.on('mouseover', function() {
+        pushEvent(handle, function() {
           showPath(path, pathData[handle], contestantIndex);
           applySelectedStyle(D3path); 
-        });
-        D3path.on('mouseout', function() {
+        }, function() {
           hidePath(contestantIndex, path.length);
           applyIdleStyle(D3path);
+        });
+
+        D3path.on('mouseover', function() {
+          showPathTest(handle);
+        });
+        D3path.on('mouseout', function() {
+          hidePathTest(handle);
         });
 
         path.forEach(function(point, contestIndex) {
@@ -188,15 +197,8 @@ var contestTrack = function() {
             .attr('cx', point.x)
             .attr('cy', point.y)
             .attr('r', 4)
-            .on('mouseover', function() { 
-              showPath(path, pathData[handle], contestantIndex);
-              applySelectedStyle(D3path); 
-            })
-            .on('mouseout', function() { 
-              hidePath(contestantIndex, path.length);
-              applyIdleStyle(D3path); 
-            });
-          // TODO: add applyCircleStyle
+            .on('mouseover', function() { showPathTest(handle); })
+            .on('mouseout', function() { hidePathTest(handle); });
         });
       });
       return track;
@@ -205,6 +207,29 @@ var contestTrack = function() {
       return track.displayRange(0, data.length);
     }
   };
+
+  function pushEvent(handle, showEvent, hideEvent) {
+    if (show[handle]) {
+      show[handle].push(showEvent); 
+      hide[handle].push(hideEvent); 
+    } else {
+      show[handle] = [showEvent]; 
+      hide[handle] = [hideEvent];
+    }
+  }
+
+  function clearEvents(handle) {
+    show[handle] = []; 
+    hide[handle] = [];
+  }
+
+  function showPathTest(handle) {
+    show[handle].forEach(function(d){ d(); });
+  }
+
+  function hidePathTest(handle) {
+    hide[handle].forEach(function(d){ d(); });
+  }
 
   function showPath(path, pData, contestantIndex) {
     path.forEach(function(point, index) {
@@ -240,11 +265,8 @@ var contestTrack = function() {
     tooltip
       .attr('h-padding', 5)
       .attr('text-content', data.tooltip)
+      .translate(point)
       .display();
-
-    container
-      .attr('transform', 'translate(' + point.x + ',' + point.y + ')')
-
     tooltips[key] = tooltip;
   }
 
@@ -268,7 +290,7 @@ var contestTrack = function() {
     var offsetY = track.getAttr('offsetY');
     return {
       x: offsetX * (col),
-      y: offsetY * (row) 
+      y: offsetY * (row), 
     }; 
   }
 
@@ -277,7 +299,11 @@ var contestTrack = function() {
   }
 
   function getCubicPoints(a, b) {
-    return [{x: (b.x+a.x)/2, y: a.y}, {x: (a.x + b.x)/2, y: b.y}, b];
+    return [
+      {x: (b.x + a.x)/2, y: a.y}, 
+      {x: (a.x + b.x)/2, y: b.y}, 
+      b,
+    ];
   }
 
   function formatPath(path) {

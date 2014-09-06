@@ -20,7 +20,6 @@ function D3tooltip(D3container) {
 
   var tooltip = {
     attr: function(name, value) {
-      // bypass everything to the container (D3tooltip)
       properties[name] = value;     
       return tooltip;
     },
@@ -70,6 +69,11 @@ function D3tooltip(D3container) {
               y: vertex.y - offset,
             },
           ].map(UTILS.formatPoint).join(' '));
+      return tooltip;
+    },
+    translate: function(point) {
+      D3view.attr('transform', 
+                  'translate(' + point.x + ', ' + point.y + ')');
       return tooltip;
     },
     display: function() {
