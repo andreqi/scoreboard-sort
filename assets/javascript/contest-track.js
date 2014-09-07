@@ -215,7 +215,7 @@ var contestTrack = function() {
               hideDispatcher.dispatch(handle); 
             });
         });
-      });
+     });
       return track;
     },
     displayRange: function(begin, end) {
