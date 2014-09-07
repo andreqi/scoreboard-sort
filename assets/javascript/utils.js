@@ -35,16 +35,16 @@ STL.idx = function(map, key, def) {
     map.put(key, def); 
   } 
   return map.get(key);
-}
+};
 
-STL.dispatcher = function () {
+STL.dispatcher = function() {
   var map = STL.map();
   var STLdispatcher = {
-    register: function (key, handler) {
+    register: function(key, handler) {
       var handlers = STL.idx(map, key, []);
       handlers.push(handler);
     },
-    dispatch: function (key) {
+    dispatch: function(key) {
       if (map.has(key)) {
         var handlers = map.get(key); 
         for (var i = 0, l = handlers.length; i < l; i++) {
@@ -58,5 +58,42 @@ STL.dispatcher = function () {
     clear: map.clear,
   };
   return STLdispatcher;
+};
+
+STL.hashset = function() {
+  var map = STL.map();
+  var keys = [];
+  var STLhash = {
+    put: function(key) {
+      if (!map.has(key)) {
+        keys.push(key);
+        map.put(key, 1);
+      } 
+    },
+    forEach: function(f) {
+      keys.forEach(f); 
+    },
+    size: function() {
+      return keys.length;  
+    },
+  };
+  return STLhash;
 }
+
+var PathBag = function() {
+  var points = STL.map(); 
+  var pathBag = {
+    put: function(key, data) {
+      var keyPoints = STL.idx(points, key, []); 
+      keyPoints.push(data);
+    },
+    get: function(key) {
+      return points.get(key); 
+    },
+    getIndex: function(key, index) {
+      return points.get(key)[index]; 
+    }
+  };
+  return pathBag;
+};
 

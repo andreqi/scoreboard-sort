@@ -84,7 +84,11 @@ function D3tooltip(D3container) {
       if (tooltip.getAttr('display-triangle')) {
         tooltip.displayTriangle();
       }
+      D3container.style('display', '');
       return tooltip;
+    },
+    hide: function() {
+      D3container.style('display', 'none');
     },
     remove: function() {
       D3container.remove();  

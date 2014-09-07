@@ -7,6 +7,8 @@ var contestTrack = function() {
   var pathData = {};
   var showDispatcher = STL.dispatcher();
   var hideDispatcher = STL.dispatcher();
+  var pathBag = PathBag();
+  var contestants = STL.hashset();
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -44,28 +46,25 @@ var contestTrack = function() {
       contests = data.length;
       handles = {};
       data.forEach(function(scoreboard, indexS) {
-        scoreboard.sort(function(a, b) {
-          return -a.points + b.points; 
-        });
-        // first line to labels
-        contestLabel.push(getPoint(0, indexS));
-
-        scoreboard.forEach(function(contestant, indexC) {
-          if (!handles[contestant.handle]) {
-            handles[contestant.handle] = 1; 
-            handleOrder.push(contestant.handle);
-            handleSize++;
-          }
-          // first line reserved to contest labels
-          pushPoint(contestant.handle, indexC + 1, indexS, {
-            tooltip: (indexC+1) + '° ' + contestant.points, 
-            handle: contestant.handle,
-            place: indexC + 1,
-          });
-        });
+        var label = indexS+1 == data.length ? 
+                    'Wiki' : 'Contest ' + (indexS+1);
+        track.push(label, scoreboard);
       });
       return track;
     }, 
+    push: function (label, scoreboard) {
+      pathBag.put('contestLabel', label);
+      scoreboard.sort(function(a, b) {
+        return b.points - a.points; 
+      });
+      scoreboard.forEach(function(contestant, place) {
+        contestants.put(contestant.handle);
+        pathBag.put(contestant.handle, {
+          place: place + 1, 
+          points: contestant.points,
+        }); 
+      });
+    },
     attr: function(propName, value) {
       properties[propName] = value;
       return track; 
@@ -75,9 +74,11 @@ var contestTrack = function() {
     },
     displayLastContest: function (index, transform) {
       D3lasttips.selectAll('*').remove();
-      handleOrder.forEach(function(handle) {
-        var point = transform(paths[handle][index]);
-        var place = pathData[handle][index].place;
+      contestants.forEach(function(handle) {
+        var data = pathBag.getIndex(handle, index);
+        var place = data.place;
+        var point = getPoint(place, index);
+        point = transform(point);
 
         var team="";
         if (place <= 3) {
@@ -120,32 +121,112 @@ var contestTrack = function() {
     },
     displayContestLabels: function (begin, end, transform) {
       D3contestLabels.selectAll('*').remove();
-      showDispatcher.clear();
-      hideDispatcher.clear();
-
-      var points = contestLabel.slice(begin, end).map(transform);
-      var last = end - begin - 1;
-      points.forEach(function(point, index) {
+      var path = pathBag.get('contestLabel');
+      for (var index = begin; index < end; index++) {
+        var point = getPoint(0, index); 
+        point = transform(point);
         var container = D3contestLabels.append('g');
         var tooltip = D3tooltip(container)
           .attr('h-padding', 10)
-          .attr('text-content', (index != last) ? 'Contest ' + (index+1)
-                                                : 'Wiki')
+          .attr('text-content', path[index])
           .attr('display-triangle', false)
           .translate(point)
           .display();
 
         container
-          .classed('contest-label-container');
+          .classed('contest-label-container', true);
+      }
+    },
+    displayPaths: function(begin, end, transform) {
+      var ttips = [];
+      for (var index = begin; index < end; index++) {
+        ttips.push(D3tooltip(D3tooltips.append('g'))); 
+        ttips[index-begin].attr('h-padding', 5);
+      }
+
+      function hideTooltip(tooltip) {
+        return function() {
+          tooltip.hide(); 
+        }; 
+      }
+
+      function showTooltip(tooltip, point, label) {
+         return function() {
+           tooltip.translate(point)
+                  .attr('h-padding', 5)
+                  .attr('text-content', label)
+                  .display();
+         }; 
+      };
+
+      contestants.forEach(function(handle) {
+        var path = [];
+        var data = pathBag.get(handle);
+        for (var index = begin; index < end; index++) {
+          var contestant = data[index]; 
+          var point = transform(getPoint(contestant.place, index)); 
+          path.push(point);
+          var id = index - begin;
+          var tooltipPos = {
+            x: point.x,
+            y: point.y - track.getAttr('tip-offsetY'),
+          };
+          var label = contestant.place + 'º ' + contestant.points; 
+
+          showDispatcher.register(
+            handle, 
+            showTooltip(ttips[id], tooltipPos, label)
+          );
+          hideDispatcher.register(
+            handle, 
+            hideTooltip(ttips[id])
+          );
+        } 
+
+        hideDispatcher.register(handle, function() {
+          D3path.classed('selected', false); 
+        });
+        showDispatcher.register(handle, function() {
+          D3path.classed('selected', true); 
+        });
+
+        var D3path = D3view
+                  .append('path')
+                    .attr('d', formatPath(path))
+                    .attr('fill', 'transparent')
+                    .style('pointer-events', 'stroke');
+
+        D3path.on('mouseover', function() {
+          showDispatcher.dispatch(handle);
+        });
+        D3path.on('mouseout', function() {
+          hideDispatcher.dispatch(handle);
+        });
+
+        path.forEach(function(point, contestIndex) {
+          D3view.append('circle')
+            .attr('cx', point.x)
+            .attr('cy', point.y)
+            .attr('r', 4)
+            .on('mouseover', function() { 
+              showDispatcher.dispatch(handle); 
+            })
+            .on('mouseout', function() { 
+              hideDispatcher.dispatch(handle); 
+            });
+        });
       });
+      return track;
     },
     displayRange: function(begin, end) {
       D3view.selectAll('*').remove();
       D3tooltips.selectAll('*').remove();
+      showDispatcher.clear();
+      hideDispatcher.clear();
       var scale = function(point) {
         var points = end - begin;
         var width = (points - 1) * track.getAttr('offsetX');
-        var height = (handleSize) * track.getAttr('offsetY');
+        var height = (contestants.size()) * track.getAttr('offsetY');
         var scaleX = (track.getAttr('width') - 120) / width;
         var scaleY = (track.getAttr('height') - 20) / height;
         return {
@@ -173,96 +254,13 @@ var contestTrack = function() {
 
       track.displayLastContest(end - 1, transform);
       track.displayContestLabels(begin, end, transform);
-
-      handleOrder.forEach(function(handle, contestantIndex) {
-        var path = paths[handle].slice(begin, end).map(transform);
-        var D3path = D3view
-                  .append('path')
-                    .attr('d', formatPath(path))
-                    .attr('fill', 'transparent')
-                    .style('pointer-events', 'stroke');
-
-        showDispatcher.register(handle, function() {
-          showPath(path, pathData[handle], contestantIndex);
-          D3path.classed('selected', true); 
-        });
-        hideDispatcher.register(handle, function() {
-          hidePath(contestantIndex, path.length);
-          D3path.classed('selected', false); 
-        });
-
-        D3path.on('mouseover', function() {
-          showDispatcher.dispatch(handle);
-        });
-        D3path.on('mouseout', function() {
-          hideDispatcher.dispatch(handle);
-        });
-
-        path.forEach(function(point, contestIndex) {
-          D3view.append('circle')
-            .attr('cx', point.x)
-            .attr('cy', point.y)
-            .attr('r', 4)
-            .on('mouseover', function() { 
-              showDispatcher.dispatch(handle); 
-            })
-            .on('mouseout', function() { 
-              hideDispatcher.dispatch(handle); 
-            });
-        });
-      });
+      track.displayPaths(begin, end, transform);
       return track;
     },
     display: function() {
       return track.displayRange(0, data.length);
     }
   };
-
-  function showPath(path, pData, contestantIndex) {
-    path.forEach(function(point, index) {
-      showTooltip(contestantIndex, index, {
-        x: point.x, 
-        y: point.y - track.getAttr('tip-offsetY'),
-      }, pData[index]); 
-    });
-  }
-
-  function hidePath(contestantIndex, times) {
-    for (var idx = 0; idx < times; idx++) {
-      hideTooltip(contestantIndex, idx); 
-    }
-  }
-
-  function genKey(contestant, contest) {
-    return contestant + '+' + contest; 
-  }
-
-  function showTooltip(contestantIndex, contestIndex, point, data) {
-    var key = genKey(contestantIndex, contestIndex); 
-    var container = D3tooltips.append('g');
-    var tooltip = D3tooltip(container); 
-    tooltip
-      .attr('h-padding', 5)
-      .attr('text-content', data.tooltip)
-      .translate(point)
-      .display();
-    tooltips[key] = tooltip;
-  }
-
-  function hideTooltip(contestantIndex, contestIndex) {
-    var key = genKey(contestantIndex, contestIndex); 
-    tooltips[key].remove();
-  }
-
-  function pushPoint(contestantID, row, col, data) {
-    if (!paths[contestantID]) {
-      paths[contestantID] = []; 
-      pathData[contestantID] = []
-    } 
-    var path = paths[contestantID];
-    path.push(getPoint(row, col));
-    pathData[contestantID].push(data);
-  }
 
   function getPoint(row, col) {
     var offsetX = track.getAttr('offsetX');
