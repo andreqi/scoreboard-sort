@@ -8,6 +8,7 @@ var STL = {};
 
 STL.map = function() {
   var container = {};
+  var size = 0;
   var STLmap = {
     has: function(key) {
       return key in container; 
@@ -16,16 +17,28 @@ STL.map = function() {
       return container[key]; 
     },
     put: function(key, value) {
+      if (!STLmap.has(key)) {
+        size++;
+      }
       container[key] = value;
     },
     remove: function(key) {
       if (STLmap.has(key)) {
+        size--;
         delete container[key]; 
       }
     },
     clear: function() {
       container = {};
     },
+    size: function() {
+      return size; 
+    },
+    forEach: function(f) {
+      for (var key in container) {
+        f(key);
+      } 
+    }
   };
   return STLmap;
 }

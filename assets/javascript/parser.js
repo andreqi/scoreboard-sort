@@ -9,10 +9,9 @@ var parse = function(file) {
       if (contest.length <= index) {
         contest.push([]);
       }
-      sum += parseFloat(acum);
       contest[index].push({
         handle: name, 
-        points: sum,
+        points: parseFloat(acum),
       });
     });  
   });

@@ -2,6 +2,10 @@
  * Globals
  */
 
+.contest-label-container rect {
+  fill: #925B8C;
+}
+
 .gold {
   fill: red;
 }
@@ -26,7 +30,7 @@ path {
 
 path.selected {
   stroke: #A7DBD8;
-  stroke-width: 6;
+  stroke-width: 7;
 }
 
 circle {

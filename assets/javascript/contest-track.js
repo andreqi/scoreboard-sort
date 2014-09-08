@@ -8,7 +8,7 @@ var contestTrack = function() {
   var showDispatcher = STL.dispatcher();
   var hideDispatcher = STL.dispatcher();
   var pathBag = PathBag();
-  var contestants = STL.hashset();
+  var contestants = STL.map();
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -41,27 +41,40 @@ var contestTrack = function() {
       D3tooltips = D3parent.append('g'); 
       return track;
     },
-    setData: function(d) {
+    setData: function(d, operator) {
       data = d;
       contests = data.length;
       handles = {};
       data.forEach(function(scoreboard, indexS) {
         var label = indexS+1 == data.length ? 
                     'Wiki' : 'Contest ' + (indexS+1);
-        track.push(label, scoreboard);
+        track.push(label, scoreboard, operator);
       });
       return track;
     }, 
     push: function (label, scoreboard) {
-      pathBag.put('contestLabel', label);
-      scoreboard.sort(function(a, b) {
-        return b.points - a.points; 
+      function addPoints(handle, points) {
+        var p = 0;
+        if (contestants.has(handle)) {
+          p = contestants.get(handle); 
+        } 
+        p += points;
+        contestants.put(handle, p);
+      }
+      scoreboard.forEach(function(contestant) {
+        addPoints(contestant.handle, contestant.points); 
       });
+
+      pathBag.put('contestLabel', label);
+
+      scoreboard.sort(function(a, b) {
+        return contestants.get(b.handle) - contestants.get(a.handle); 
+      });
+
       scoreboard.forEach(function(contestant, place) {
-        contestants.put(contestant.handle);
         pathBag.put(contestant.handle, {
           place: place + 1, 
-          points: contestant.points,
+          points: contestants.get(contestant.handle),
         }); 
       });
     },
@@ -203,7 +216,7 @@ var contestTrack = function() {
           hideDispatcher.dispatch(handle);
         });
 
-        path.forEach(function(point, contestIndex) {
+        path.forEach(function(point) {
           D3view.append('circle')
             .attr('cx', point.x)
             .attr('cy', point.y)
