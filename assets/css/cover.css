@@ -206,3 +206,31 @@ body {
   }
 }
 
+/*
+  detail-data
+*/
+
+#detail-data {
+  background-color: pink;
+  padding: 20px 0;
+}
+
+#dirinfo {
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.nav-tabs>li>a {
+  color: black;  
+}
+
+.nav-tabs>li>a:hover {
+  background-color: rgba(146, 91, 140, 0.5);
+  color: black;
+}
+
+.nav-tabs>li.active>a,
+.nav-tabs>li.active>a:hover {
+  background-color: #925B8C !important;
+  color: white !important;
+}
