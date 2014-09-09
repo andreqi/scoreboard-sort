@@ -18,4 +18,4 @@ var Dirinfo = function() {
     }
   };
   return handler;
-};
+}();

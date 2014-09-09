@@ -211,7 +211,6 @@ body {
 */
 
 #detail-data {
-  background-color: pink;
   padding: 20px 0;
 }
 
@@ -221,16 +220,27 @@ body {
 }
 
 .nav-tabs>li>a {
-  color: black;  
+  color: white;  
+  border: 1px solid #404040;
 }
 
 .nav-tabs>li>a:hover {
-  background-color: rgba(146, 91, 140, 0.5);
-  color: black;
+  background-color: rgba(100, 202, 209, 0.5);
+  color: white;
+  border: 1px solid #404040;
 }
 
 .nav-tabs>li.active>a,
 .nav-tabs>li.active>a:hover {
-  background-color: #925B8C !important;
+  background-color: #64CAD1 !important;
   color: white !important;
+}
+
+.nav-tabs {
+  border-bottom: 1px solid #404040;
+}
+
+.tab-content,
+.inner-svg-parent {
+  border: 1px solid #404040;
 }

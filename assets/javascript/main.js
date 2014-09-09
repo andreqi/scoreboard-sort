@@ -1,8 +1,9 @@
 $(function(){
+  var parentcontest = d3.select('#contest');
+  var contest = contestTrack(parentcontest);
   d3.json('assets/data/3/scoreboard.json', function(data) {
-    var parent = d3.select('#contest');
-    contestTrack(parent)
-      .attr('width', 1000)
+    contest
+      .attr('width', 1100)
       .attr('height', 600)
       .setData(data.scoreboards, data.contestants, function(contestant){
         return contestant.solved;
@@ -22,6 +23,19 @@ $(function(){
         return contestant.points;
       })
       .display();
+  });
+  Dirinfo.on('selectTab', function(content) {
+    var id = content[content.length-1];
+    d3.json('assets/data/'+ id +'/scoreboard.json', function(data) {
+      contest
+      .attr('width', 1100)
+      .attr('height', 600)
+      .setData(data.scoreboards, data.contestants, function(contestant){
+        return contestant.solved;
+      }, data.contests)
+    .display();
+    });
+
   });
 }())
 

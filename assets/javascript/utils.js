@@ -89,6 +89,10 @@ STL.hashset = function() {
     size: function() {
       return keys.length;  
     },
+    clear: function() {
+      keys = [];
+      map.clear(); 
+    }
   };
   return STLhash;
 }
@@ -105,6 +109,9 @@ var PathBag = function() {
     },
     getIndex: function(key, index) {
       return points.get(key)[index]; 
+    },
+    clear: function() {
+      points.clear(); 
     }
   };
   return pathBag;
