@@ -9,7 +9,6 @@ var contestTrack = function(D3parent) {
   var hideDispatcher = STL.dispatcher();
   var pathBag = PathBag();
   var contestants = STL.hashset();
-  var contestLabel = [];
   var contests = 0;
   var properties = {
     'offsetX': 200, 
@@ -22,10 +21,6 @@ var contestTrack = function(D3parent) {
     'last-tip-width': 150,
     'last-tip-height': 20,
   };
-  var handles = {};
-  var tooltips = {};
-  var handleOrder = [];
-  var handleSize = 0;
 
   // D3 containers
   var D3view = D3parent.append('g');
@@ -35,6 +30,8 @@ var contestTrack = function(D3parent) {
   
   var track = {
     setData: function(d, contestantList, getLabel, labels) {
+      contests = 0;
+      pathBag.clear();
       track.setHandles(contestantList);
       d.forEach(function(scoreboard, indexS) {
         var label = indexS+1 == d.length ? 
@@ -50,6 +47,7 @@ var contestTrack = function(D3parent) {
       return track;
     }, 
     setHandles: function(contestantList) {
+      contestants.clear();
       contestantList.forEach(function(name) { 
         contestants.put(name); 
       });
