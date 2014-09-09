@@ -10,7 +10,7 @@ class ContestantScore(object):
     def __repr__(self):
         return '{' + self.handle + ', ' + \
                 str(self.solved) + ', ' + \
-                str(self.penalty) + '}'
+                str(self.penalty/60) + '}'
 
 class Contest(object):
 

@@ -2,13 +2,13 @@
  * scoreboard = [{handle: rata, points: 10}]
  */
 
-var contestTrack = function() {
+var contestTrack = function(D3parent) {
   var paths = {};
   var pathData = {};
   var showDispatcher = STL.dispatcher();
   var hideDispatcher = STL.dispatcher();
   var pathBag = PathBag();
-  var contestants = STL.map();
+  var contestants = STL.hashset();
   var contestLabel = [];
   var contests = 0;
   var properties = {
@@ -28,53 +28,39 @@ var contestTrack = function() {
   var handleSize = 0;
 
   // D3 containers
-  var D3view = null;
-  var D3tooltips = null;
-  var D3lasttips = null;
-  var D3contestLabels = null;
+  var D3view = D3parent.append('g');
+  var D3lasttips = D3parent.append('g');
+  var D3contestLabels = D3parent.append('g');
+  var D3tooltips = D3parent.append('g'); 
   
   var track = {
-    setParent: function (D3parent) {
-      D3view = D3parent.append('g'); 
-      D3contestLabels = D3parent.append('g'); 
-      D3lasttips = D3parent.append('g'); 
-      D3tooltips = D3parent.append('g'); 
-      return track;
-    },
-    setData: function(d, operator) {
-      data = d;
-      contests = data.length;
-      handles = {};
-      data.forEach(function(scoreboard, indexS) {
-        var label = indexS+1 == data.length ? 
+    setData: function(d, contestantList, getLabel, labels) {
+      track.setHandles(contestantList);
+      d.forEach(function(scoreboard, indexS) {
+        var label = indexS+1 == d.length ? 
                     'Wiki' : 'Contest ' + (indexS+1);
-        track.push(label, scoreboard, operator);
+        if (labels) {
+          label = labels[indexS]; 
+        }
+        //scoreboard.sort(function(a, b) {
+        //  return b.points - a.points; 
+        //});
+        track.push(label, scoreboard, getLabel);
       });
       return track;
     }, 
-    push: function (label, scoreboard) {
-      function addPoints(handle, points) {
-        var p = 0;
-        if (contestants.has(handle)) {
-          p = contestants.get(handle); 
-        } 
-        p += points;
-        contestants.put(handle, p);
-      }
-      scoreboard.forEach(function(contestant) {
-        addPoints(contestant.handle, contestant.points); 
+    setHandles: function(contestantList) {
+      contestantList.forEach(function(name) { 
+        contestants.put(name); 
       });
-
+    },
+    push: function (label, scoreboard, getLabel) {
       pathBag.put('contestLabel', label);
-
-      scoreboard.sort(function(a, b) {
-        return contestants.get(b.handle) - contestants.get(a.handle); 
-      });
-
+      contests++;
       scoreboard.forEach(function(contestant, place) {
         pathBag.put(contestant.handle, {
           place: place + 1, 
-          points: contestants.get(contestant.handle),
+          tooltip: (place+1) + 'º ' + getLabel(contestant) 
         }); 
       });
     },
@@ -184,7 +170,7 @@ var contestTrack = function() {
             x: point.x,
             y: point.y - track.getAttr('tip-offsetY'),
           };
-          var label = contestant.place + 'º ' + contestant.points; 
+          var label = contestant.tooltip; 
 
           showDispatcher.register(
             handle, 
@@ -271,7 +257,7 @@ var contestTrack = function() {
       return track;
     },
     display: function() {
-      return track.displayRange(0, data.length);
+      return track.displayRange(0, contests);
     }
   };
 
@@ -305,4 +291,4 @@ var contestTrack = function() {
     return stringPath;
   }
   return track;
-}();
+};
