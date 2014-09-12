@@ -8,7 +8,7 @@ class Veredict(object):
 
     @classmethod
     def getVeredict(cls, veredict):
-        if veredict == 'Accepted':
+        if veredict.lower() == 'accepted':
             return cls.ACCEPTED
         else:
             return cls.WRONG_ANSWER
