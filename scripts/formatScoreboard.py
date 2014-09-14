@@ -8,7 +8,7 @@ from operator import attrgetter
 
 def getLines(path):
     f = open(path, 'rb');
-    ans = [line[:-1] for line in f.readlines()];
+    ans = [line[:-1].strip() for line in f.readlines()];
     f.close();
     return ans;
 
