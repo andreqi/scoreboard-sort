@@ -6,34 +6,52 @@
   fill: #925B8C;
 }
 
-.gold {
+rect.gold {
   fill: red;
 }
 
-.bronze {
+rect.bronze {
   fill: steelblue;
 }
 
-.silver {
+rect.silver {
   fill: gold;
 }
 
-.runner-up {
+rect.runner-up {
   fill: green;
 }
 
 /* Links */
 path {
-  stroke: steelblue;
+  stroke: gray;
   stroke-width: 2;
+}
+
+path.gold {
+  stroke: red;
+}
+
+path.bronze {
+  stroke: steelblue;
+}
+
+path.silver {
+  stroke: gold;
+}
+
+path.runner-up {
+  stroke: green;
 }
 
 path.selected {
   stroke: #A7DBD8;
   stroke-width: 7;
+  fill: none;
 }
 
 circle {
+  opacity: 0.7;
   fill: #E0E4CC;
 }
 
