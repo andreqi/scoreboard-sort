@@ -1,7 +1,7 @@
 $(function(){
   var parentcontest = d3.select('#contest');
   var contest = contestTrack(parentcontest);
-  d3.json('assets/data/1/scoreboard.json', function(data) {
+  d3.json('assets/data/8/scoreboard.json', function(data) {
     contest
       .attr('width', 1100)
       .attr('height', 600)
@@ -24,18 +24,34 @@ $(function(){
       })
       .display();
   });
+
+  var cache = {};
+
   Dirinfo.on('selectTab', function(content) {
     var id = content[content.length-1];
-    d3.json('assets/data/'+ id +'/scoreboard.json', function(data) {
-      contest
-      .attr('width', 1100)
-      .attr('height', 600)
-      .setData(data.scoreboards, data.contestants, function(contestant){
-        return contestant.solved;
-      }, data.contests)
-    .display();
-    });
+    var data = [];
+    var reloadTab = function(d) {
+      contest.attr('width', 1100)
+             .attr('height', 600)
+             .setData(
+               d.scoreboards, 
+               d.contestants, 
+               function(contestant){
+                 return contestant.solved;
+               }, 
+               d.contests)
+              .display();
+    };
 
+    if (cache[id]) {
+      data = cache[id]; 
+      reloadTab(data);
+    } else {
+      d3.json('assets/data/'+ id +'/scoreboard.json', function(d) {
+        cache[id] = d;
+        reloadTab(d);
+      });
+    }
   });
 }())
 
