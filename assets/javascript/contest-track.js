@@ -69,6 +69,19 @@ var contestTrack = function(D3parent) {
     getAttr: function(propName) {
       return properties[propName]; 
     },
+    getTier: function(place) {
+      var team="";
+      if (place <= 3) {
+        team = "gold"; 
+      } else if (place <= 6) {
+        team = "silver";
+      } else if (place <= 9) {
+        team = "bronze"; 
+      } else if (place <= 12) {
+        team = "runner-up"; 
+      }
+      return team;
+    },
     displayLastContest: function (index, transform) {
       D3lasttips.selectAll('*').remove();
       contestants.forEach(function(handle) {
@@ -76,18 +89,7 @@ var contestTrack = function(D3parent) {
         var place = data.place;
         var point = getPoint(place, index);
         point = transform(point);
-
-        var team="";
-        if (place <= 3) {
-          team = "gold"; 
-        } else if (place <= 6) {
-          team = "silver";
-        } else if (place <= 9) {
-          team = "bronze"; 
-        } else if (place <= 12) {
-          team = "runner-up"; 
-        }
-
+        var team = track.getTier(place);
         var label = place + '° ' + handle;
         var D3tooltipContainer = D3lasttips.append('g');
         var tooltip = D3tooltip(D3tooltipContainer);
@@ -179,19 +181,23 @@ var contestTrack = function(D3parent) {
             hideTooltip(ttips[id])
           );
         } 
+       
+        var D3path = D3view
+                  .append('path')
+                    .attr('d', formatPath(path))
+                    .attr('fill', 'transparent')
+                    .style('pointer-events', 'stroke');
 
+        var tier = track.getTier(data[end-1].place);
+        if (tier) {
+          D3path.classed(tier, true); 
+        }
         hideDispatcher.register(handle, function() {
           D3path.classed('selected', false); 
         });
         showDispatcher.register(handle, function() {
           D3path.classed('selected', true); 
         });
-
-        var D3path = D3view
-                  .append('path')
-                    .attr('d', formatPath(path))
-                    .attr('fill', 'transparent')
-                    .style('pointer-events', 'stroke');
 
         D3path.on('mouseover', function() {
           showDispatcher.dispatch(handle);
