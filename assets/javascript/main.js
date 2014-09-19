@@ -1,7 +1,7 @@
 $(function(){
   var parentcontest = d3.select('#contest');
   var contest = contestTrack(parentcontest);
-  d3.json('assets/data/8/scoreboard.json', function(data) {
+  d3.json('assets/data/9/scoreboard.json', function(data) {
     contest
       .attr('width', 1100)
       .attr('height', 600)

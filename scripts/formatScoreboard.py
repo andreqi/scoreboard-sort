@@ -37,12 +37,11 @@ def splitEach(time_stream, seconds, get):
     end, start = seconds, 0
     ans, cur = [], []
     for idx, time in enumerate(time_stream): 
-        if get(time) > end:
+        while get(time) > end:
             ans.append(cur)
-            cur = [time]
+            cur = []
             end += seconds
-        else: 
-            cur.append(time)
+        cur.append(time)
     if cur:
         ans.append(cur)
     return ans
